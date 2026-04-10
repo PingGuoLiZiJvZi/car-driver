@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Car Driver 远程控制台</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body>
+  <div class="bg-grid"></div>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Car Driver 控制台</h1>
+        <p>摄像头 + 底盘控制 + 对讲 + TTS</p>
+      </div>
+      <div class="topbar-right">
+        <div class="status" id="statusText">未登录</div>
+        <div class="user-chip" id="currentUser">访客</div>
+        <button id="btnLogout" class="btn ghost">退出登录</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <article class="video-card panel">
+        <h2>实时画面</h2>
+        <img id="videoFeed" src="" data-src="/video.mjpg" alt="camera" />
+        <div class="inline-row">
+          <button id="btnAudio" class="btn ghost">开启监听音频</button>
+          <span id="audioState">音频监听：未开启</span>
+        </div>
+        <label class="slider-wrap audio-slider" for="monitorVolume">
+          <span>监听音量</span>
+          <input id="monitorVolume" type="range" min="0" max="3" value="1.2" step="0.05" />
+          <strong id="monitorVolumeValue">120%</strong>
+        </label>
+        <div class="inline-row">
+          <button id="btnAudioMute" class="btn ghost">静音</button>
+          <span id="audioRx">下行速率：0 KB/s</span>
+        </div>
+      </article>
+
+      <article class="drive-card panel">
+        <h2>底盘控制</h2>
+        <p class="hint">支持键盘 WASD。松开即停止。</p>
+
+        <label class="slider-wrap" for="speedRange">
+          <span>速度</span>
+          <input id="speedRange" type="range" min="0.2" max="1" value="0.6" step="0.05" />
+          <strong id="speedValue">0.60</strong>
+        </label>
+
+        <div class="pad" aria-label="wsad control">
+          <button class="ctrl ctrl-w" data-key="w">W</button>
+          <button class="ctrl ctrl-a" data-key="a">A</button>
+          <button class="ctrl ctrl-s" data-key="s">S</button>
+          <button class="ctrl ctrl-d" data-key="d">D</button>
+          <button class="ctrl stop" id="btnStop">STOP</button>
+        </div>
+      </article>
+
+      <article class="voice-card panel">
+        <h2>语音交互</h2>
+        <button id="btnTalk" class="btn danger">按住说话</button>
+        <p class="hint">按住按钮时采集麦克风并发送到小车 USB 扬声器。</p>
+
+        <label for="ttsInput">文本转语音</label>
+        <textarea id="ttsInput" placeholder="输入想让小车播报的文字"></textarea>
+        <button id="btnTts" class="btn">发送 TTS</button>
+      </article>
+
+      <article class="auth-card panel">
+        <h2>账号登录</h2>
+        <label for="authUsername">用户名</label>
+        <input id="authUsername" type="text" maxlength="32" autocomplete="username" placeholder="输入用户名" />
+        <label for="authPassword">密码</label>
+        <input id="authPassword" type="password" maxlength="128" autocomplete="current-password" placeholder="输入密码" />
+        <div class="inline-row">
+          <button id="btnLogin" class="btn">登录</button>
+          <button id="btnRegister" class="btn ghost">注册</button>
+        </div>
+        <p class="hint">默认管理员：admin / admin123。</p>
+      </article>
+
+      <article class="access-card panel">
+        <h2>控制权与在线用户</h2>
+        <p id="controlOwnerText" class="hint">当前控制者：无</p>
+        <div class="inline-row">
+          <input id="requestTarget" type="text" maxlength="32" placeholder="可选：指定请求目标用户名" />
+        </div>
+        <div class="inline-row">
+          <button id="btnRequestControl" class="btn">申请控制权</button>
+          <button id="btnForceControl" class="btn ghost">管理员强制接管</button>
+          <button id="btnReleaseControl" class="btn ghost">释放控制权</button>
+        </div>
+
+        <h3>在线用户</h3>
+        <div id="onlineUsers" class="list-box"></div>
+
+        <h3>待处理申请</h3>
+        <div id="pendingRequests" class="list-box"></div>
+
+        <h3 class="hidden">审计日志</h3>
+        <div id="auditEvents" class="list-box hidden"></div>
+      </article>
+    </section>
+
+    <section class="log panel hidden">
+      <h2>日志</h2>
+      <pre id="logBox"></pre>
+    </section>
+  </main>
+
+  <script src="/static/app.js" defer></script>
+</body>
+
+</html>

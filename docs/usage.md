@@ -112,3 +112,59 @@ time.sleep(2)
 lib.chassis_set_velocity(0.0, 0.0, 0.0)
 lib.chassis_cleanup()
 ```
+
+## 推荐 8 路 GPIO（实机可用）
+
+以下引脚已在当前 OrangePi Zero3 实机上确认处于可用状态，且均位于物理引脚 1-26 范围：
+
+| 角色 | wiringPi | 物理脚位 | SoC |
+|---|---:|---:|---|
+| FL_IN1 | 6 | 12 | PC11 |
+| FL_IN2 | 5 | 11 | PC6 |
+| FR_IN1 | 7 | 13 | PC5 |
+| FR_IN2 | 8 | 15 | PC8 |
+| RL_IN1 | 10 | 18 | PC14 |
+| RL_IN2 | 9 | 16 | PC15 |
+| RR_IN1 | 13 | 22 | PC7 |
+| RR_IN2 | 16 | 26 | PC10 |
+
+对应数组：
+
+```python
+pins = (ctypes.c_int * 8)(6, 5, 7, 8, 10, 9, 13, 16)
+```
+
+## 简单控制脚本
+
+项目根目录新增了 `simple_control.py`，可直接调用 `libchassis.so` 进行基础控制。
+
+默认启动为交互式菜单模式：
+
+```bash
+make
+sudo python3 simple_control.py
+```
+
+交互示例（前进 1 秒）：
+- 菜单输入 `1`（forward）
+- 速度输入 `0.4`（或直接回车使用默认值）
+- 时长输入 `1`
+
+使用方式：
+
+```bash
+make
+sudo python3 simple_control.py               # 默认 interactive
+sudo python3 simple_control.py interactive   # 显式 interactive
+sudo python3 simple_control.py stop
+sudo python3 simple_control.py forward --speed 0.4 --duration 1.5
+sudo python3 simple_control.py left --speed 0.5 --duration 1.0
+sudo python3 simple_control.py cw --speed 0.3 --duration 1.2
+sudo python3 simple_control.py demo --speed 0.4 --duration 0.8
+```
+
+动作参数说明：
+- `action`: `interactive|demo|forward|backward|left|right|cw|ccw|stop`
+- `--speed`: 归一化速度，范围 `[0.0, 1.0]`
+- `--duration`: 每次动作持续秒数
+- `--log-level`: `0=DEBUG, 1=INFO, 2=ERROR`

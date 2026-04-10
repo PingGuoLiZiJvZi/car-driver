@@ -1,41 +1,18 @@
-# ────────────────────────────────────────────────────────────────
-#  Makefile for libchassis.so — Mecanum Wheel Chassis Library
-# ────────────────────────────────────────────────────────────────
+include .env
+export
 
-CC      := gcc
-CFLAGS  := -Wall -Wextra -O2 -fPIC
-TARGET  := libchassis.so
-SRC     := chassis.c
-HDR     := chassis.h
-TEST_SRC := test_chassis.c
-TEST_BIN := test_chassis
+run:
+	sudo uvicorn server.app:app --host 0.0.0.0 --port 3725
 
-# ── Architecture detection ──
-ARCH := $(shell uname -m)
-
-ifeq ($(ARCH),aarch64)
-    # Orange Pi / ARM64: link real wiringOP
-    LDFLAGS := -shared -lwiringPi -lpthread -lm
-    LDFLAGS_TEST := -L. -lchassis -lwiringPi -lpthread -lm -Wl,-rpath,.
-else
-    # x86 / dev host: mock mode, no wiringPi dependency
-    LDFLAGS := -shared -lpthread -lm
-    LDFLAGS_TEST := -L. -lchassis -lpthread -lm -Wl,-rpath,.
-endif
-
-# ── Default target ──
-.PHONY: all clean test
-
-all: $(TARGET)
-
-$(TARGET): $(SRC) $(HDR)
-	$(CC) $(CFLAGS) -o $@ $(SRC) $(LDFLAGS)
-
-# ── Build & run test program ──
-test: $(TARGET) $(TEST_SRC)
-	$(CC) $(CFLAGS) -o $(TEST_BIN) $(TEST_SRC) $(LDFLAGS_TEST)
-	@echo "──────────── Running test ────────────"
-	./$(TEST_BIN)
-
-clean:
-	rm -f $(TARGET) $(TEST_BIN)
+run_simple:
+	sudo MIC_DEVICE=plughw:CARD=Device_1,DEV=0 \
+	SPEAKER_DEVICE=plughw:CARD=Device,DEV=0 \
+	CAMERA_DEVICE=/dev/video0 \
+	CAMERA_WIDTH=320 \
+	CAMERA_HEIGHT=240 \
+	CAMERA_FPS=12 \
+	MIC_SAMPLE_RATE=8000 \
+	CONTROL_HZ=20 \
+	TTS_KEY=$(TTS_KEY) \
+	TTS_APP_ID=$(TTS_APP_ID) \
+	uvicorn server.app:app --host 0.0.0.0 --port 3725

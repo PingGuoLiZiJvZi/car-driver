@@ -1,2 +1,7 @@
 .vscode
 libchassis.so
+*/__pycache__/*
+__pycache__/*
+.env
+*.log
+server/users.json
