@@ -29,6 +29,8 @@ const state = {
   talkStream: null,
   talkSource: null,
   talkProcessor: null,
+  talkConfig: { sampleRate: 16000, channels: 1 },
+  talkConfigReady: false,
   talking: false,
 };
 
@@ -460,6 +462,7 @@ function closeRealtimeChannels() {
     ws.onclose = null;
     closeSocketSafely(ws);
   }
+  state.talkConfigReady = false;
   state.talking = false;
   btnTalk.classList.remove("active");
   btnTalk.textContent = "按住说话";
@@ -1024,11 +1027,36 @@ async function ensureTalkPipeline() {
     const ws = new WebSocket(wsUrl("/ws/talk"));
     ws.binaryType = "arraybuffer";
     state.talkWs = ws;
+    state.talkConfigReady = false;
 
     await new Promise((resolve, reject) => {
       ws.onopen = () => {
         appendLog("对讲通道已连接");
         resolve();
+      };
+      ws.onmessage = (event) => {
+        if (typeof event.data !== "string") {
+          return;
+        }
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === "config") {
+            state.talkConfig = {
+              sampleRate: Number(payload.sampleRate || 16000),
+              channels: Number(payload.channels || 1),
+            };
+            state.talkConfigReady = true;
+            appendLog(
+              `对讲配置 sampleRate=${state.talkConfig.sampleRate} channels=${state.talkConfig.channels}`
+            );
+            return;
+          }
+          if (payload.type === "error") {
+            appendLog(`对讲错误: ${payload.message || "unknown"}`);
+          }
+        } catch (err) {
+          appendLog(`对讲消息解析失败: ${String(err)}`);
+        }
       };
       ws.onerror = () => {
         reject(new Error("对讲通道连接失败"));
@@ -1049,12 +1077,16 @@ async function ensureTalkPipeline() {
       if (!state.talking) {
         return;
       }
+      if (!state.talkConfigReady) {
+        return;
+      }
       if (!state.talkWs || state.talkWs.readyState !== WebSocket.OPEN) {
         return;
       }
 
       const input = event.inputBuffer.getChannelData(0);
-      const down = downsampleFloat32(input, state.talkCtx.sampleRate, 16000);
+      const targetSampleRate = Number(state.talkConfig?.sampleRate || 16000);
+      const down = downsampleFloat32(input, state.talkCtx.sampleRate, targetSampleRate);
       const pcm = floatToInt16(down);
       state.talkWs.send(pcm.buffer);
     };

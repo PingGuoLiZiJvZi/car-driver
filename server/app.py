@@ -228,7 +228,7 @@ def create_app() -> FastAPI:
         audit_path=AUDIT_LOG_PATH,
         admin_username=os.environ.get("ADMIN_USERNAME", "pglzjz"),
         admin_password=os.environ.get("ADMIN_PASSWORD", "pglzjz"),
-        session_timeout_s=float(os.environ.get("SESSION_TIMEOUT", "120")),
+        session_timeout_s=float(os.environ.get("SESSION_TIMEOUT", "1200")),
     )
 
     camera_cfg = CameraConfig(
@@ -246,12 +246,15 @@ def create_app() -> FastAPI:
         chunk_ms=int(os.environ.get("MIC_CHUNK_MS", "100")),
     )
 
+    talk_sample_rate = int(os.environ.get("TALK_SAMPLE_RATE", "16000"))
+    talk_channels = int(os.environ.get("TALK_CHANNELS", str(mic_cfg.channels)))
+
     chassis = ChassisDriver.from_env(PROJECT_ROOT)
     camera = MjpegCameraStream(camera_cfg)
     mic = PcmMicBroadcaster(mic_cfg)
     talk = TalkbackPcmPlayer(
-        sample_rate=mic_cfg.sample_rate,
-        channels=mic_cfg.channels,
+        sample_rate=talk_sample_rate,
+        channels=talk_channels,
         output_device=speaker_device,
     )
     tts = TTSEngine(
@@ -605,6 +608,15 @@ def create_app() -> FastAPI:
             await ws.send_json({"type": "error", "message": "no control permission"})
             await ws.close(code=4403)
             return
+
+        await ws.send_json(
+            {
+                "type": "config",
+                "sampleRate": talk_sample_rate,
+                "channels": talk_channels,
+                "sampleFormat": "s16le",
+            }
+        )
 
         try:
             while True:
